@@ -12,12 +12,6 @@
 #include <WebServer.h>
 #include "auth.h"
 
-#include "DHT.h"
-
-#define DHTPIN 2
-#define DHTTYPE DHT11
-
-DHT dht(DHTPIN, DHTTYPE);
 #define dateYpos 25
 #define dateXpos 34
 #define dateTextSize 3
@@ -124,7 +118,7 @@ void getTime()
   writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec) + " ");
   return;
 }
-void getTemp()
+void getTemp(bool bWrite)
 {
   sensors_event_t humidity, temp;
   aht.getEvent(&humidity, &temp); // populate temp and humidity objects with fresh data
@@ -156,41 +150,11 @@ void getTemp()
   Serial.print(humidity.relative_humidity);
   Serial.println("% RH");
 
-  storeStr = "AHT25 " + sTemp + " " + sHum + " ";
-  writeData(storeStr);
-}
-void getTempDht22()
-{
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-
-  // LCD print
-  // 元の出力を消去
-  M5.Lcd.setTextSize(tempTextSize);
-  M5.Lcd.setCursor(tempXpos, tempYpos);
-  M5.Lcd.setTextColor(BLACK);
-  M5.Lcd.println(sTemp);
-  M5.Lcd.setCursor(tempXpos, tempYpos + tempTextSize * 10);
-  M5.Lcd.print(sHum);
-  // 新たな読み値を出力
-  sTemp = "Temp:" + String(t) + " C";
-  sHum = "Hum :" + String(h) + " RH";
-  M5.Lcd.setCursor(tempXpos, tempYpos);
-  M5.Lcd.setTextColor(RED);
-  M5.Lcd.println(sTemp);
-  M5.Lcd.setCursor(tempXpos, tempYpos + tempTextSize * 10);
-  M5.Lcd.print(sHum);
-
-  // Serial print
-  Serial.print("Temperature22: ");
-  Serial.print(t);
-  Serial.println(" degrees C");
-  Serial.print("Humidity22: ");
-  Serial.print(h);
-  Serial.println("% RH");
-
-  storeStr = " DHT22 " + sTemp + " " + sHum + "\n";
-  writeData(storeStr);
+  if (bWrite)
+  {
+    storeStr = "AHT25 " + sTemp + " " + sHum + " \n";
+    writeData(storeStr);
+  }
 }
 
 void setup()
@@ -206,13 +170,12 @@ void setup()
 
   if (aht.begin())
   {
-    Serial.println("Found AHT20");
+    Serial.println("Found AHT25");
   }
   else
   {
-    Serial.println("Didn't find AHT20");
+    Serial.println("Didn't find AHT25");
   }
-  dht.begin();
 
   wifiConnect();
 
@@ -237,14 +200,12 @@ void loop()
   }
   if (loopCount % 10 == 0)
   {
-    // getTime();
+    getTime();
+    getTemp(true);
   }
   loopCount += 1;
   Serial.println(loopCount);
-  getTime();
+
+  getTemp(false);
   delay(1000);
-  getTemp();
-  delay(5000);
-  getTempDht22();
-  delay(5000);
 }

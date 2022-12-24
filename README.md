@@ -10,7 +10,7 @@ M5stackで高精度環境センサ(AHT25)を使い温度・湿度を観測しLog
 
 ## 動作要件 (Requirements)
 
-M5stack (Basic) / C++ / PlatformIO / AHT25(Environment sensor) / Wi-Fi
+M5stack (Basic) / C++ / PlatformIO / AHT25(Environment sensor) / Wi-Fi /Micro SD card
 
 ## 回路図 (Circuit diagram)
 
