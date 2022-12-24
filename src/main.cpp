@@ -12,6 +12,12 @@
 #include <WebServer.h>
 #include "auth.h"
 
+#include "DHT.h"
+
+#define DHTPIN 2
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
 #define dateYpos 25
 #define dateXpos 34
 #define dateTextSize 3
@@ -31,6 +37,10 @@ Adafruit_AHTX0 aht;
 String sTemp;
 String sHum;
 int loopCount = 0;
+
+// 保存するファイル名
+const char *fname = "/log.csv";
+String storeStr;
 
 void wifiConnect()
 {
@@ -52,6 +62,17 @@ void wifiConnect()
   }
   Serial.println("\nwifi connect OK");
 }
+void writeData(String str)
+{
+  // SDカードへの書き込み処理（ファイル追加モード）
+  // SD.beginはM5.begin内で処理されているので不要
+  File file;
+  file = SD.open(fname, FILE_APPEND);
+  file.print(str);
+  file.close();
+  Serial.println("SD write!");
+}
+
 struct tm timeinfo;
 int weekday;
 void getTime()
@@ -99,6 +120,8 @@ void getTime()
     int sec = timeinfo.tm_sec;
     delay((60 - sec) * 1000);
   }
+  writeData(String(timeinfo.tm_year + 1900) + "-" + String(timeinfo.tm_mon + 1) + "-" + String(timeinfo.tm_mday));
+  writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec) + " ");
   return;
 }
 void getTemp()
@@ -131,12 +154,48 @@ void getTemp()
   Serial.println(" degrees C");
   Serial.print("Humidity: ");
   Serial.print(humidity.relative_humidity);
-  Serial.println("% rH");
+  Serial.println("% RH");
+
+  storeStr = "AHT25 " + sTemp + " " + sHum + " ";
+  writeData(storeStr);
+}
+void getTempDht22()
+{
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  // LCD print
+  // 元の出力を消去
+  M5.Lcd.setTextSize(tempTextSize);
+  M5.Lcd.setCursor(tempXpos, tempYpos);
+  M5.Lcd.setTextColor(BLACK);
+  M5.Lcd.println(sTemp);
+  M5.Lcd.setCursor(tempXpos, tempYpos + tempTextSize * 10);
+  M5.Lcd.print(sHum);
+  // 新たな読み値を出力
+  sTemp = "Temp:" + String(t) + " C";
+  sHum = "Hum :" + String(h) + " RH";
+  M5.Lcd.setCursor(tempXpos, tempYpos);
+  M5.Lcd.setTextColor(RED);
+  M5.Lcd.println(sTemp);
+  M5.Lcd.setCursor(tempXpos, tempYpos + tempTextSize * 10);
+  M5.Lcd.print(sHum);
+
+  // Serial print
+  Serial.print("Temperature22: ");
+  Serial.print(t);
+  Serial.println(" degrees C");
+  Serial.print("Humidity22: ");
+  Serial.print(h);
+  Serial.println("% RH");
+
+  storeStr = " DHT22 " + sTemp + " " + sHum + "\n";
+  writeData(storeStr);
 }
 
 void setup()
 {
-  M5.begin(true, false, true);
+  M5.begin(true, true, true); // LCD SD Serial
   M5.Power.begin();
   M5.Lcd.setRotation(3);
   Serial.begin(115200);
@@ -153,8 +212,20 @@ void setup()
   {
     Serial.println("Didn't find AHT20");
   }
+  dht.begin();
 
   wifiConnect();
+
+  if (!SD.begin())
+  {
+    Serial.println("Error! SD card NG.");
+    M5.lcd.fillScreen(YELLOW);
+    delay(3000);
+  }
+  else
+  {
+    Serial.println("SD card OK.");
+  }
 }
 
 void loop()
@@ -166,12 +237,14 @@ void loop()
   }
   if (loopCount % 10 == 0)
   {
-    getTime();
+    // getTime();
   }
   loopCount += 1;
   Serial.println(loopCount);
-
-  getTemp();
-
+  getTime();
   delay(1000);
+  getTemp();
+  delay(5000);
+  getTempDht22();
+  delay(5000);
 }
