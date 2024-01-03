@@ -25,7 +25,8 @@
 #define tempTextColor WHITE
 #define defTextSize 3
 #define tempTextSize 3
-#define secTimeOffset 13 // 環境に応じて設定
+#define secTimeOffset 13   // 環境に応じて設定
+#define LogWriteCycle 3600 // sec
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 Adafruit_AHTX0 aht;
@@ -36,6 +37,7 @@ int loopCount = 0;
 // 保存するファイル名
 const char *fname = "/log.csv";
 String storeStr;
+int batteryLevel;
 
 void wifiConnect()
 {
@@ -153,9 +155,15 @@ void getTemp(bool bWrite)
 
   if (bWrite)
   {
-    storeStr = "AHT25 " + sTemp + " " + sHum + " \n";
+    storeStr = " AHT25 " + sTemp + " " + sHum + " \n";
     writeData(storeStr);
   }
+}
+
+void getBattery()
+{
+  batteryLevel = M5.Power.getBatteryLevel(); // 残量取得
+  writeData("Battery:" + String(batteryLevel));
 }
 
 void setup()
@@ -202,9 +210,10 @@ void loop()
   {
     m5.Lcd.clear(BLACK);
   }
-  if (loopCount % 10 == 0)
+  if (loopCount % LogWriteCycle == 0)
   {
     getTime();
+    getBattery();
     getTemp(true);
   }
   loopCount += 1;
