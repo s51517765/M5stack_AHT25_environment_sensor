@@ -23,6 +23,7 @@
 #define tempYpos 160
 #define tempXpos 45
 #define tempTextColor WHITE
+#define defTextSize 3
 #define tempTextSize 3
 #define secTimeOffset 13 // 環境に応じて設定
 
@@ -182,8 +183,11 @@ void setup()
   if (!SD.begin())
   {
     Serial.println("Error! SD card NG.");
-    M5.lcd.fillScreen(YELLOW);
-    delay(3000);
+    M5.Lcd.setTextColor(YELLOW);
+    M5.Lcd.setTextSize(defTextSize);
+    M5.Lcd.println("Error! SD card NG.");
+    delay(5000);
+    m5.Lcd.clear(BLACK);
   }
   else
   {
