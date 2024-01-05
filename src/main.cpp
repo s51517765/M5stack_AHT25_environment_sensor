@@ -33,6 +33,7 @@ Adafruit_AHTX0 aht;
 String sTemp;
 String sHum;
 int loopCount = 0;
+unsigned long g_time;
 
 // 保存するファイル名
 const char *fname = "/log.csv";
@@ -59,6 +60,7 @@ void wifiConnect()
   }
   Serial.println("\nwifi connect OK");
 }
+
 void writeData(String str)
 {
   // SDカードへの書き込み処理（ファイル追加モード）
@@ -205,6 +207,8 @@ void setup()
 
 void loop()
 {
+  g_time = millis();
+
   M5.update(); // ボタンを読み取る
   if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(100, 200))
   {
@@ -212,13 +216,20 @@ void loop()
   }
   if (loopCount % LogWriteCycle == 0)
   {
-    getTime();
     getBattery();
     getTemp(true);
   }
+
   loopCount += 1;
   Serial.println(loopCount);
-
   getTemp(false);
-  delay(1000);
+  if (loopCount % 60 == 0)
+  {
+    getTime();
+  }
+
+  while (millis() - g_time < 1000)
+  {
+    // 1秒待機
+  }
 }
