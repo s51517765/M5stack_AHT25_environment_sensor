@@ -37,7 +37,6 @@ unsigned long g_time;
 
 // 保存するファイル名
 const char *fname = "/log.csv";
-String storeStr;
 int batteryLevel;
 
 void wifiConnect()
@@ -119,8 +118,6 @@ void getTime()
     int sec = timeinfo.tm_sec;
     delay((60 - sec) * 1000);
   }
-  writeData(String(timeinfo.tm_year + 1900) + "-" + String(timeinfo.tm_mon + 1) + "-" + String(timeinfo.tm_mday));
-  writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec) + " ");
   return;
 }
 void getTemp(bool bWrite)
@@ -157,15 +154,16 @@ void getTemp(bool bWrite)
 
   if (bWrite)
   {
-    storeStr = " AHT25 " + sTemp + " " + sHum + " \n";
-    writeData(storeStr);
+    writeData(String(timeinfo.tm_year + 1900) + "-" + String(timeinfo.tm_mon + 1) + "-" + String(timeinfo.tm_mday));
+    writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec));
+    writeData(" AHT25 " + sTemp + " " + sHum);
   }
 }
 
 void getBattery()
 {
   batteryLevel = M5.Power.getBatteryLevel(); // 残量取得
-  writeData("Battery:" + String(batteryLevel));
+  writeData(" Battery:" + String(batteryLevel) + "\n");
 }
 
 void setup()
@@ -216,8 +214,8 @@ void loop()
   }
   if (loopCount % LogWriteCycle == 0)
   {
-    getBattery();
     getTemp(true);
+    getBattery();
   }
 
   loopCount += 1;
