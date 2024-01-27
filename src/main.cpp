@@ -73,7 +73,7 @@ void writeData(String str)
 
 struct tm timeinfo;
 int weekday;
-void getTime()
+void getTime(bool bWrite)
 {
   const long gmtOffset_sec = 3600 * 9 + secTimeOffset; // UTC + 9
   const int daylightOffset_sec = 3600 * 0;             // Summer Timeなし
@@ -112,6 +112,11 @@ void getTime()
 
   Serial.println(&timeinfo, "%Y-%m-%d %A %H:%M:%S");
 
+  if (bWrite)
+  {
+    writeData(String(timeinfo.tm_year + 1900) + "-" + String(timeinfo.tm_mon + 1) + "-" + String(timeinfo.tm_mday));
+    writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec));
+  }
   if (loopCount == 0)
   {
     // 秒単位の時刻補正
@@ -154,8 +159,6 @@ void getTemp(bool bWrite)
 
   if (bWrite)
   {
-    writeData(String(timeinfo.tm_year + 1900) + "-" + String(timeinfo.tm_mon + 1) + "-" + String(timeinfo.tm_mday));
-    writeData(" " + String(timeinfo.tm_hour) + ":" + String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec));
     writeData(" AHT25 " + sTemp + " " + sHum);
   }
 }
@@ -214,6 +217,7 @@ void loop()
   }
   if (loopCount % LogWriteCycle == 0)
   {
+    getTime(true);
     getTemp(true);
     getBattery();
   }
@@ -223,7 +227,7 @@ void loop()
   getTemp(false);
   if (loopCount % 60 == 0)
   {
-    getTime();
+    getTime(false);
   }
 
   while (millis() - g_time < 1000)
